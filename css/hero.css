@@ -3,9 +3,9 @@
     flex-direction: column;
     align-items: center;
     gap: 2rem;
-    max-width: 1200px;
-    margin: 0 auto 8rem;
-    padding: 4rem 1.25rem;
+    width: 100%;
+    margin: 0 0 8rem;
+    padding: 0 0 4rem;
     overflow: hidden;
     background-color: var(--bg);
 }
@@ -18,13 +18,14 @@
     display: block;
     width: 100%;
     height: auto;
-    border-radius: 6px;
     box-shadow: var(--shadow);
 }
 
 .hero-text {
+    box-sizing: border-box;
     width: 100%;
     max-width: 900px;
+    padding: 0 1.25rem;
     text-align: center;
 }
 
@@ -82,9 +83,8 @@
 /* MOBILE----------------------------- */
 @media (max-width: 768px) {
     .hero-wrapper {
-        padding: 2rem 1rem;
+        padding: 0 0 2rem;
         gap: 1.5rem;
-        max-width: 767px;
     }
 
     #home {

@@ -5,7 +5,6 @@ header {
     z-index: 1000;
     background: var(--primary);
     border-bottom: 1px solid #0053f83b;
-    margin-bottom: 2vh;
   }
   
   /* NAV BASE */
