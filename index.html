@@ -102,37 +102,45 @@
   <section id="servicos" data-animate>
     <h2>Serviços</h2>
 
-    <div class="cards">
-      <article class="card">
-        <div class="servicos-image">
-          <img src="/assets//quadro-eletrico-hero.webp" loading="lazy"
-            alt="Projeto de iluminação decorativa residencial com pendentes instalado por eletricista em São Paulo">
-        </div>
-        <div class="servicos-text">
-          <h3>Montagem de quadros elétricos </h3>
-          <p>Instalação e adequação elétrica residencial e comercial.</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="servicos-image">
-          <img src="/assets/ar-condicionado.webp" loading="lazy" alt="Manutenção de Ar condicionado residencial">
-        </div>
-        <div class="servicos-text">
-          <h3>Instalações de Ar-condicionado</h3>
-          <p>Instalação e manutenção de ar condicionado</p>
-        </div>
-      </article>
-      <article class="card">
-        <div class="servicos-image">
-          <img src="/assets/WhatsApp Image 2026-02-10 at 20.30.35.jpeg" loading="lazy"
-            alt="Quadro elétrico industrial organizado com disjuntores, barramentos e aterramento adequado">
-        </div>
-        <div class="servicos-text">
-          <h3>Atendimento Emergencial</h3>
-          <p>Atendimento para quedas de energia, curtos-circuitos e falhas elétricas.</p>
-        </div>
-      </article>
+    <div class="servicos-carousel" aria-roledescription="carrossel" aria-label="Carrossel de serviços">
+      <button class="carousel-arrow carousel-arrow-left" type="button" aria-label="Serviço anterior">‹</button>
+
+      <div class="cards" tabindex="0">
+        <article class="card">
+          <div class="servicos-image">
+            <img src="/assets//quadro-eletrico-hero.webp" loading="lazy"
+              alt="Projeto de iluminação decorativa residencial com pendentes instalado por eletricista em São Paulo">
+          </div>
+          <div class="servicos-text">
+            <h3>Montagem de quadros elétricos </h3>
+            <p>Instalação e adequação elétrica residencial e comercial.</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="servicos-image">
+            <img src="/assets/ar-condicionado.webp" loading="lazy" alt="Manutenção de Ar condicionado residencial">
+          </div>
+          <div class="servicos-text">
+            <h3>Instalações de Ar-condicionado</h3>
+            <p>Instalação e manutenção de ar condicionado</p>
+          </div>
+        </article>
+        <article class="card">
+          <div class="servicos-image">
+            <img src="/assets/WhatsApp Image 2026-02-10 at 20.30.35.jpeg" loading="lazy"
+              alt="Quadro elétrico industrial organizado com disjuntores, barramentos e aterramento adequado">
+          </div>
+          <div class="servicos-text">
+            <h3>Atendimento Emergencial</h3>
+            <p>Atendimento para quedas de energia, curtos-circuitos e falhas elétricas.</p>
+          </div>
+        </article>
+      </div>
+
+      <button class="carousel-arrow carousel-arrow-right" type="button" aria-label="Próximo serviço">›</button>
     </div>
+
+    <div class="carousel-dots" aria-label="Selecionar serviço"></div>
   </section>
 
 
@@ -348,6 +356,120 @@
     });
 
     elements.forEach(el => observer.observe(el));
+  </script>
+
+
+  <script>
+    const servicesCarousel = document.querySelector('.servicos-carousel');
+
+    if (servicesCarousel) {
+      const track = servicesCarousel.querySelector('.cards');
+      const cards = Array.from(track.querySelectorAll('.card'));
+      const previousButton = servicesCarousel.querySelector('.carousel-arrow-left');
+      const nextButton = servicesCarousel.querySelector('.carousel-arrow-right');
+      const dotsContainer = document.querySelector('.carousel-dots');
+      let activeIndex = 0;
+      let pointerStartX = 0;
+      let pointerStartScroll = 0;
+      let pointerDeltaX = 0;
+      let isDragging = false;
+      let scrollTimer;
+
+      const dots = cards.map((_, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'carousel-dot';
+        dot.setAttribute('aria-label', `Ir para o serviço ${index + 1}`);
+        dot.addEventListener('click', () => setActiveCard(index));
+        dotsContainer.appendChild(dot);
+        return dot;
+      });
+
+      function setActiveCard(index) {
+        activeIndex = (index + cards.length) % cards.length;
+
+        cards.forEach((card, cardIndex) => {
+          const isActive = cardIndex === activeIndex;
+          card.classList.toggle('is-active', isActive);
+          card.setAttribute('aria-current', isActive ? 'true' : 'false');
+        });
+
+        dots.forEach((dot, dotIndex) => {
+          dot.classList.toggle('is-active', dotIndex === activeIndex);
+          dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
+        });
+
+        cards[activeIndex].scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+
+      function moveCarousel(direction) {
+        setActiveCard(activeIndex + direction);
+      }
+
+      previousButton.addEventListener('click', () => moveCarousel(-1));
+      nextButton.addEventListener('click', () => moveCarousel(1));
+
+      track.addEventListener('pointerdown', event => {
+        isDragging = true;
+        pointerStartX = event.clientX;
+        pointerStartScroll = track.scrollLeft;
+        pointerDeltaX = 0;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(event.pointerId);
+      });
+
+      track.addEventListener('pointermove', event => {
+        if (!isDragging) return;
+        pointerDeltaX = event.clientX - pointerStartX;
+        track.scrollLeft = pointerStartScroll - pointerDeltaX;
+      });
+
+      track.addEventListener('pointerup', event => {
+        if (!isDragging) return;
+        isDragging = false;
+        track.classList.remove('is-dragging');
+        track.releasePointerCapture(event.pointerId);
+
+        if (Math.abs(pointerDeltaX) > 45) {
+          moveCarousel(pointerDeltaX < 0 ? 1 : -1);
+        } else {
+          setActiveCard(activeIndex);
+        }
+      });
+
+      track.addEventListener('pointercancel', () => {
+        isDragging = false;
+        track.classList.remove('is-dragging');
+        setActiveCard(activeIndex);
+      });
+
+      track.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft') moveCarousel(-1);
+        if (event.key === 'ArrowRight') moveCarousel(1);
+      });
+
+      function syncActiveCardWithScroll() {
+        const trackCenter = track.getBoundingClientRect().left + track.clientWidth / 2;
+        const closestIndex = cards.reduce((closest, card, index) => {
+          const rect = card.getBoundingClientRect();
+          const distance = Math.abs(rect.left + rect.width / 2 - trackCenter);
+          return distance < closest.distance ? { index, distance } : closest;
+        }, { index: activeIndex, distance: Infinity }).index;
+
+        if (closestIndex !== activeIndex) setActiveCard(closestIndex);
+      }
+
+      track.addEventListener('scroll', () => {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(syncActiveCardWithScroll, 120);
+      });
+
+      setActiveCard(0);
+    }
   </script>
 
 
