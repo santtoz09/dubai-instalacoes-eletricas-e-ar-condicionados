@@ -107,9 +107,16 @@
 
       <div class="cards" tabindex="0">
         <article class="card">
-          <div class="servicos-image">
-            <img src="/assets/file_000000009ad4720e9f334b062bf7ed29.png" loading="lazy"
+          <div class="servicos-image service-image-carousel" data-service-images>
+            <img class="service-image-slide is-active" src="/assets/file_000000009ad4720e9f334b062bf7ed29.png" loading="lazy"
               alt="Projeto de iluminação decorativa residencial com pendentes instalado por eletricista em São Paulo">
+            <img class="service-image-slide" src="/assets/quadro-eletrico-hero.webp" loading="lazy"
+              alt="Quadro elétrico residencial organizado após serviço de instalação elétrica">
+            <img class="service-image-slide" src="/assets/selfie-quadro-eletrico.jpeg" loading="lazy"
+              alt="Técnico eletricista em atendimento próximo a quadro elétrico residencial">
+            <div class="service-image-progress" aria-hidden="true">
+              <span></span>
+            </div>
           </div>
           <div class="servicos-text">
             <h3>Elétrica</h3>
@@ -117,8 +124,13 @@
           </div>
         </article>
         <article class="card">
-          <div class="servicos-image">
-            <img src="/assets/file_00000000a378720e9513d3c7f3781212[1].jpg" loading="lazy" alt="Manutenção de Ar condicionado residencial">
+          <div class="servicos-image service-image-carousel" data-service-images>
+            <img class="service-image-slide is-active" src="/assets/file_00000000a378720e9513d3c7f3781212[1].jpg" loading="lazy" alt="Manutenção de Ar condicionado residencial">
+            <img class="service-image-slide" src="/assets/ar-condicionado.webp" loading="lazy" alt="Ar-condicionado instalado em ambiente residencial">
+            <img class="service-image-slide" src="/assets/IMG-20260202-WA0014.jpg" loading="lazy" alt="Serviço técnico em equipamento de ar-condicionado">
+            <div class="service-image-progress" aria-hidden="true">
+              <span></span>
+            </div>
           </div>
           <div class="servicos-text">
             <h3>Ar-condicionado</h3>
@@ -126,9 +138,9 @@
           </div>
         </article>
         <article class="card">
-          <div class="servicos-image">
-            <img src="/assets/teto-drywall.jpg" loading="lazy"
-              alt="Quadro elétrico industrial organizado com disjuntores, barramentos e aterramento adequado">
+          <div class="servicos-image service-image-carousel" data-service-images>
+            <img class="service-image-slide is-active" src="/assets/teto-drywall.jpg" loading="lazy"
+              alt="Forro em drywall com acabamento residencial instalado">
           </div>
           <div class="servicos-text">
             <h3>DryWall</h3>
@@ -375,6 +387,66 @@
       let isDragging = false;
       let scrollTimer;
 
+      function initializeServiceImageCarousel(card) {
+        const imageWrapper = card.querySelector('[data-service-images]');
+        if (!imageWrapper) return null;
+
+        const slides = Array.from(imageWrapper.querySelectorAll('.service-image-slide'));
+        const progressBar = imageWrapper.querySelector('.service-image-progress span');
+        const hasCarousel = slides.length > 1;
+        let imageIndex = 0;
+        let timer;
+
+        imageWrapper.classList.toggle('has-carousel', hasCarousel);
+
+        function restartProgress() {
+          if (!progressBar) return;
+
+          progressBar.classList.remove('is-progressing');
+          void progressBar.offsetWidth;
+          progressBar.classList.add('is-progressing');
+        }
+
+        function showImage(nextIndex) {
+          imageIndex = (nextIndex + slides.length) % slides.length;
+          slides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === imageIndex);
+          });
+          restartProgress();
+        }
+
+        function scheduleNextImage() {
+          clearTimeout(timer);
+          if (!hasCarousel) return;
+
+          timer = setTimeout(() => {
+            showImage(imageIndex + 1);
+            scheduleNextImage();
+          }, 3000);
+        }
+
+        function start() {
+          if (!hasCarousel) return;
+          showImage(0);
+          scheduleNextImage();
+        }
+
+        function stop() {
+          clearTimeout(timer);
+          if (progressBar) progressBar.classList.remove('is-progressing');
+        }
+
+        slides.forEach((slide, slideIndex) => {
+          slide.classList.toggle('is-active', slideIndex === 0);
+        });
+
+        if (hasCarousel) start();
+
+        return { start, stop };
+      }
+
+      const serviceImageCarousels = cards.map(card => initializeServiceImageCarousel(card));
+
       const dots = cards.map((_, index) => {
         const dot = document.createElement('button');
         dot.type = 'button';
@@ -392,6 +464,15 @@
           const isActive = cardIndex === activeIndex;
           card.classList.toggle('is-active', isActive);
           card.setAttribute('aria-current', isActive ? 'true' : 'false');
+
+          const imageCarousel = serviceImageCarousels[cardIndex];
+          if (imageCarousel) {
+            if (isActive) {
+              imageCarousel.start();
+            } else {
+              imageCarousel.stop();
+            }
+          }
         });
 
         dots.forEach((dot, dotIndex) => {
