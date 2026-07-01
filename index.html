@@ -103,8 +103,6 @@
     <h2>Serviços</h2>
 
     <div class="servicos-carousel" aria-roledescription="carrossel" aria-label="Carrossel de serviços">
-      <button class="carousel-arrow carousel-arrow-left" type="button" aria-label="Serviço anterior">‹</button>
-
       <div class="cards" tabindex="0">
         <article class="card">
           <div class="servicos-image service-image-carousel" data-service-images>
@@ -147,7 +145,6 @@
         </article>
       </div>
 
-      <button class="carousel-arrow carousel-arrow-right" type="button" aria-label="Próximo serviço">›</button>
     </div>
 
     <div class="carousel-dots" aria-label="Selecionar serviço"></div>
@@ -375,8 +372,6 @@
     if (servicesCarousel) {
       const track = servicesCarousel.querySelector('.cards');
       const cards = Array.from(track.querySelectorAll('.card'));
-      const previousButton = servicesCarousel.querySelector('.carousel-arrow-left');
-      const nextButton = servicesCarousel.querySelector('.carousel-arrow-right');
       const dotsContainer = document.querySelector('.carousel-dots');
       let activeIndex = 0;
       let pointerStartX = 0;
@@ -394,6 +389,7 @@
         const hasCarousel = slides.length > 1;
         let imageIndex = 0;
         let timer;
+        let isRunning = false;
 
         imageWrapper.classList.toggle('has-carousel', hasCarousel);
 
@@ -423,22 +419,27 @@
           }, 3000);
         }
 
-        function start() {
-          if (!hasCarousel) return;
-          showImage(0);
+        function start({ reset = false } = {}) {
+          if (!hasCarousel || isRunning) return;
+
+          isRunning = true;
+          if (reset) {
+            showImage(0);
+          } else {
+            restartProgress();
+          }
           scheduleNextImage();
         }
 
         function stop() {
           clearTimeout(timer);
+          isRunning = false;
           if (progressBar) progressBar.classList.remove('is-progressing');
         }
 
         slides.forEach((slide, slideIndex) => {
           slide.classList.toggle('is-active', slideIndex === 0);
         });
-
-        if (hasCarousel) start();
 
         return { start, stop };
       }
@@ -455,42 +456,40 @@
         return dot;
       });
 
-      function setActiveCard(index) {
-        activeIndex = (index + cards.length) % cards.length;
+      function setActiveCard(index, { align = true } = {}) {
+        const nextIndex = (index + cards.length) % cards.length;
+        const previousIndex = activeIndex;
+        const changedCard = nextIndex !== previousIndex;
+        activeIndex = nextIndex;
 
         cards.forEach((card, cardIndex) => {
           const isActive = cardIndex === activeIndex;
           card.classList.toggle('is-active', isActive);
           card.setAttribute('aria-current', isActive ? 'true' : 'false');
-
-          const imageCarousel = serviceImageCarousels[cardIndex];
-          if (imageCarousel) {
-            if (isActive) {
-              imageCarousel.start();
-            } else {
-              imageCarousel.stop();
-            }
-          }
         });
+
+        if (changedCard) {
+          serviceImageCarousels[previousIndex]?.stop();
+          serviceImageCarousels[activeIndex]?.start({ reset: true });
+        }
 
         dots.forEach((dot, dotIndex) => {
           dot.classList.toggle('is-active', dotIndex === activeIndex);
           dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
         });
 
-        cards[activeIndex].scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'center'
-        });
+        if (align) {
+          cards[activeIndex].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+        }
       }
 
       function moveCarousel(direction) {
         setActiveCard(activeIndex + direction);
       }
-
-      previousButton.addEventListener('click', () => moveCarousel(-1));
-      nextButton.addEventListener('click', () => moveCarousel(1));
 
       track.addEventListener('pointerdown', event => {
         isDragging = true;
@@ -539,7 +538,7 @@
           return distance < closest.distance ? { index, distance } : closest;
         }, { index: activeIndex, distance: Infinity }).index;
 
-        if (closestIndex !== activeIndex) setActiveCard(closestIndex);
+        if (closestIndex !== activeIndex) setActiveCard(closestIndex, { align: false });
       }
 
       track.addEventListener('scroll', () => {
@@ -547,7 +546,23 @@
         scrollTimer = setTimeout(syncActiveCardWithScroll, 120);
       });
 
-      setActiveCard(0);
+      cards.forEach((card, cardIndex) => {
+        const isActive = cardIndex === activeIndex;
+        card.classList.toggle('is-active', isActive);
+        card.setAttribute('aria-current', isActive ? 'true' : 'false');
+      });
+
+      dots.forEach((dot, dotIndex) => {
+        dot.classList.toggle('is-active', dotIndex === activeIndex);
+        dot.setAttribute('aria-current', dotIndex === activeIndex ? 'true' : 'false');
+      });
+
+      serviceImageCarousels[activeIndex]?.start({ reset: true });
+      cards[activeIndex].scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest',
+        inline: 'center'
+      });
     }
   </script>
 
